@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, Integer, Table, ForeignKey, BigInteger, Boolean
+from datetime import datetime
+
+from sqlalchemy import Column, String, Integer, Table, ForeignKey, BigInteger, Boolean, Date
 from sqlalchemy.orm import relationship
 from database import Base
 from .order import Order
@@ -32,4 +34,5 @@ class Contractors(Base):
                             cascade="all, delete",
                             passive_deletes=True)
     orders = relationship("Order", backref='contractor')
+    date_reg = Column(Date, default=datetime.utcnow, comment="Дата регистрации")
     free_try = Column(Boolean, comment="Бесплатная попытка", default=True)

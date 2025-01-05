@@ -7,7 +7,7 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from keyboards import main_menu_admin, main_menu_contractors
 from repositories import ContractRepository
-
+import datetime
 router = Router()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -29,5 +29,6 @@ async def start_command(message: types.Message, state: FSMContext):
         contractor = await ContractRepository.get_contractor_by_id(user_id)
         reg = True if contractor else False
         text = user_text.text_start if not reg else user_text.text_constr.format(fio=contractor.full_name, city=contractor.city,
-                                                                                 number=contractor.number_phone, balance=contractor.balance)
+                                                                                 number=contractor.number_phone, balance=contractor.balance,
+                                                                                 date_reg=datetime.date.strftime(contractor.date_reg, '%d-%m-%Y'))
         await message.answer(text, reply_markup=await main_menu_contractors(reg))

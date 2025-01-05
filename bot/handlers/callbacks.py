@@ -20,7 +20,7 @@ from keyboards import main_menu_admin, main_menu_contractors, services_menu, up_
 from repositories import ServiceRepository, ContractRepository, OrderRepository
 from utils.payment import create_url_payment
 import logging
-
+import datetime
 list_admins = [272513813]
 router = Router()
 logging.basicConfig(level=logging.INFO)
@@ -46,7 +46,8 @@ async def main_menu(callback_query: CallbackQuery, state: FSMContext):
         text = user_text.text_start if not reg else user_text.text_constr.format(fio=contractor.full_name,
                                                                                  balance=contractor.balance,
                                                                                  number=contractor.number_phone,
-                                                                                 city=contractor.city)
+                                                                                 city=contractor.city,
+                                                                                 date_reg=datetime.date.strftime(contractor.date_reg, '%d-%m-%Y'))
         await callback_query.message.edit_text(text=text,
                                                reply_markup=await main_menu_contractors(reg))
 
