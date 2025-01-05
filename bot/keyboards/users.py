@@ -2,7 +2,7 @@ from aiofiles import stdout
 from aiogram.types import (ReplyKeyboardMarkup, KeyboardButton,
                            InlineKeyboardButton, InlineKeyboardMarkup)
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-
+import datetime
 from models import Service, Order
 import logging
 
@@ -214,7 +214,7 @@ async def orders_select_keyboard(orders: list[Order]) -> InlineKeyboardMarkup:
     """
     keyboard = InlineKeyboardMarkup(inline_keyboard=[])
     for order in orders:
-        text = order.description[:27] + '...'
+        text = datetime.date.strftime(order.date, '%d-%m-%Y')
         keyboard.inline_keyboard.append([InlineKeyboardButton(text=text,
                                                               callback_data=f"detail_order_{order.id}")])
     keyboard.inline_keyboard.append([InlineKeyboardButton(text='Назад', callback_data='my_orders')])

@@ -149,7 +149,7 @@ async def payment_callback(callback_query: CallbackQuery, state: FSMContext):
     """
     price = float(callback_query.data.split('_')[1])
     await callback_query.message.delete()
-    link_pay = await create_url_payment(callback_query.from_user.id, price)
+    link_pay = await create_url_payment(callback_query.from_user.id, 20)
     keyboard = await payment_keyboard(link_pay)
     await callback_query.message.answer(
             text="Перейдите по ссылке и пополните свой баланс.\n"
