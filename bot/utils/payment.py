@@ -10,7 +10,7 @@ async def create_url_payment(user_id: int, price: float):
     :return: url
     """
     label = f'{user_id}:{price}'
-    quickpay = Quickpay(receiver="4100118911991584", quickpay_form='shop', targets="Sponsor this project",
+    quickpay = Quickpay(receiver="4100118944044936", quickpay_form='shop', targets="Sponsor this project",
                         paymentType='AC', sum=price, label=label)
     return quickpay.redirected_url
 
