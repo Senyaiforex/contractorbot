@@ -246,3 +246,4 @@ pass_button = ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="Пропуст
                                   one_time_keyboard=True,
                                   resize_keyboard=True,
                                   is_persistent=False)
+menu_button = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='В меню', callback_data='menu')]])

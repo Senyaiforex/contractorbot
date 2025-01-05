@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.cors import CORSMiddleware
 from database import get_async_session, engine, Base
 from fixtures import create_services
-from keyboards import offer_order
+from keyboards import offer_order, menu_button
 from repositories import ContractRepository, OrderRepository
 from utils import user_text
 
@@ -56,7 +56,8 @@ async def payment_notification(request: Request):
                                                 OrderRepository.get_active_orders())
             await bot.send_message(int(user_id),
                                    text=f"Оплата прошла успешно\n\n"
-                                        f"Ваш баланс пополнен на {price}")
+                                        f"Ваш баланс пополнен на {price} рублей.",
+                                   reply_markup=menu_button)
             if orders:
                 for order in orders:
                     if order.service in user.services:
@@ -87,7 +88,7 @@ async def payment_notification(request: Request):
                                                        text=user_text.text_order,
                                                        reply_markup=keyboard,
                                                        parse_mode='Markdown')
-        except (ValueError, TypeError):
+        except Exception as ex:
             return JSONResponse(content={"status": "success"}, status_code=200)
     return JSONResponse(content={"status": "success"}, status_code=200)
 
