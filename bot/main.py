@@ -57,36 +57,37 @@ async def payment_notification(request: Request):
             await bot.send_message(int(user_id),
                                    text=f"Оплата прошла успешно\n\n"
                                         f"Ваш баланс пополнен на {price}")
-            for order in orders:
-                if order.service in user.services:
-                    text = order.description + "\n\n" + f"Услуга - {order.service.name}"
-                    media_group = MediaGroupBuilder(caption=text)
-                    if order.photo_path:
-                        files_list = order.photo_path.split('\n')
-                        for path_file in files_list[:len(files_list) - 1]:
-                            if path_file:
-                                if files_list[0].split('.')[1].lower() in ['jpeg', 'png', 'jpg', 'svg', 'gif', 'raw',
-                                                                           'tiff']:
-                                    media = FSInputFile(path_file)
-                                    media_group.add_photo(media=media)
-                                else:
-                                    media = FSInputFile(path_file)
-                                    media_group.add_document(media=media)
-                        keyboard = await offer_order(user.id_telegram, order.id)
+            if orders:
+                for order in orders:
+                    if order.service in user.services:
+                        text = order.description + "\n\n" + f"Услуга - {order.service.name}"
+                        media_group = MediaGroupBuilder(caption=text)
                         if order.photo_path:
-                            await bot.send_media_group(user.id_telegram, media=media_group.build())
-                            await bot.send_message(chat_id=user.id_telegram,
-                                                   text=user_text.text_order,
-                                                   reply_markup=keyboard,
-                                                   parse_mode='Markdown')
-                        else:
-                            await bot.send_message(chat_id=user.id_telegram,
-                                                   text=text)
-                            await bot.send_message(chat_id=user.id_telegram,
-                                                   text=user_text.text_order,
-                                                   reply_markup=keyboard,
-                                                   parse_mode='Markdown')
-        except ValueError:
+                            files_list = order.photo_path.split('\n')
+                            for path_file in files_list[:len(files_list) - 1]:
+                                if path_file:
+                                    if files_list[0].split('.')[1].lower() in ['jpeg', 'png', 'jpg', 'svg', 'gif', 'raw',
+                                                                               'tiff']:
+                                        media = FSInputFile(path_file)
+                                        media_group.add_photo(media=media)
+                                    else:
+                                        media = FSInputFile(path_file)
+                                        media_group.add_document(media=media)
+                            keyboard = await offer_order(user.id_telegram, order.id)
+                            if order.photo_path:
+                                await bot.send_media_group(user.id_telegram, media=media_group.build())
+                                await bot.send_message(chat_id=user.id_telegram,
+                                                       text=user_text.text_order,
+                                                       reply_markup=keyboard,
+                                                       parse_mode='Markdown')
+                            else:
+                                await bot.send_message(chat_id=user.id_telegram,
+                                                       text=text)
+                                await bot.send_message(chat_id=user.id_telegram,
+                                                       text=user_text.text_order,
+                                                       reply_markup=keyboard,
+                                                       parse_mode='Markdown')
+        except (ValueError, TypeError):
             return JSONResponse(content={"status": "success"}, status_code=200)
     return JSONResponse(content={"status": "success"}, status_code=200)
 
