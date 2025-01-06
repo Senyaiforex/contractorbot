@@ -31,3 +31,11 @@ class OrderCreateState(StatesGroup):
     client_name_order = State()
     client_phone_order = State()
     edit_text_order = State()
+
+
+class AdminStates(StatesGroup):
+    """
+    Состояния для работы с админ-панелью
+    """
+    NAME_USER_BLOCK = State()
+    NAME_USER_UNLOCK = State()

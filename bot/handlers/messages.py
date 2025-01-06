@@ -19,7 +19,9 @@ from utils import user_text, admin_text
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 router = Router()
-project_root = Path(__file__).resolve().parent
+list_admins = [5473168797]
+list_super_users = [718586333, 272513813]
+
 
 @router.message(RegStates.FULL_NAME, F.content_type == 'text')
 async def full_name_processing(message: types.Message, state: FSMContext):
@@ -29,8 +31,9 @@ async def full_name_processing(message: types.Message, state: FSMContext):
     :param state:
     :return:
     """
+
     text = message.text
-    if len(text.split())!= 3:
+    if len(text.split()) != 3:
         await message.answer(
                 "Не правильный ввод\n\n"
                 "Пример ввода: Иванов Иван Иванович"
@@ -51,6 +54,7 @@ async def full_name_processing(message: types.Message, state: FSMContext):
             reply_markup=await contact_button()
     )
 
+
 @router.message(RegStates.PHONE, F.content_type == 'text')
 async def number_processing(message: types.Message, state: FSMContext):
     """
@@ -60,7 +64,7 @@ async def number_processing(message: types.Message, state: FSMContext):
     :return:
     """
     text = message.text
-    if len(text.split())!= 3:
+    if len(text.split()) != 3:
         await message.answer(
                 "Не правильный ввод\n\n"
                 "Пример ввода: Иванов Иван Иванович"
@@ -71,6 +75,7 @@ async def number_processing(message: types.Message, state: FSMContext):
     await message.answer(
             user_text.city_question,
     )
+
 
 @router.message(RegStates.CITY, F.content_type == 'text')
 async def city_processing(message: types.Message, state: FSMContext):
@@ -88,6 +93,8 @@ async def city_processing(message: types.Message, state: FSMContext):
             user_text.company_question,
             reply_markup=pass_button
     )
+
+
 @router.message(RegStates.COMPANY, F.content_type == 'text')
 async def company_processing(message: types.Message, state: FSMContext):
     """
@@ -105,6 +112,7 @@ async def company_processing(message: types.Message, state: FSMContext):
             reply_markup=pass_button
     )
 
+
 @router.message(RegStates.SOCIAL, F.content_type == 'text')
 async def social_processing(message: types.Message, state: FSMContext):
     """
@@ -121,6 +129,7 @@ async def social_processing(message: types.Message, state: FSMContext):
             user_text.site_question,
             reply_markup=pass_button
     )
+
 
 @router.message(RegStates.SITE, F.content_type == 'text')
 async def site_processing(message: types.Message, state: FSMContext):
@@ -142,6 +151,7 @@ async def site_processing(message: types.Message, state: FSMContext):
             parse_mode='Markdown'
     )
 
+
 @router.message(RegStates.PHONE, F.content_type == 'contact')
 async def site_processing(message: types.Message, state: FSMContext):
     """
@@ -157,6 +167,7 @@ async def site_processing(message: types.Message, state: FSMContext):
     await message.answer(
             user_text.city_question,
     )
+
 
 @router.message(ServiceState.NAME_SERVICE, F.content_type == 'text')
 async def add_service_processing(message: types.Message, state: FSMContext):
@@ -197,6 +208,7 @@ async def text_order_processing(message: types.Message, state: FSMContext):
     )
     await state.update_data(order_id=order.id)
     await state.set_state(OrderCreateState.photo_order)
+
 
 @router.message(OrderCreateState.photo_order, F.content_type.in_(['photo', 'document']))
 async def files_order_processing(message: types.Message, state: FSMContext):
@@ -240,6 +252,7 @@ async def files_order_processing(message: types.Message, state: FSMContext):
     await message.answer(text="Фотография загружена!\n"
                               "Теперь отправьте следующую фотографию или нажмите кнопку 'Готово'")
 
+
 @router.message(OrderCreateState.photo_order, F.text == "Готово")
 async def files_order_ready(message: types.Message, state: FSMContext):
     data = await state.get_data()
@@ -256,6 +269,8 @@ async def files_order_ready(message: types.Message, state: FSMContext):
         # keyboard = await add_service_in_order(services, int(order_id))
         # await message.answer(text=text + text_2,
         #                      reply_markup=keyboard, parse_mode="Markdown")
+
+
 @router.message(OrderCreateState.client_name_order, F.content_type == 'text')
 async def client_name_processing(message: types.Message, state: FSMContext):
     """
@@ -274,6 +289,7 @@ async def client_name_processing(message: types.Message, state: FSMContext):
     await message.answer(
             text
     )
+
 
 @router.message(OrderCreateState.client_phone_order, F.content_type == 'text')
 async def client_phone_processing(message: types.Message, state: FSMContext):
@@ -295,6 +311,7 @@ async def client_phone_processing(message: types.Message, state: FSMContext):
     keyboard = await add_service_in_order(services, int(order_id))
     await message.answer(text=text + text_2,
                          reply_markup=keyboard, parse_mode="Markdown")
+
 
 @router.message(OrderCreateState.edit_text_order, F.content_type == 'text')
 async def client_phone_processing(message: types.Message, state: FSMContext):
@@ -328,3 +345,67 @@ async def client_phone_processing(message: types.Message, state: FSMContext):
     keyboard = await finish_order_keyboard(order.id)
     await message.answer("Создать заказ и оповестить подрядчиков?", reply_markup=keyboard)
     await state.clear()
+
+
+@router.message(F.text == "Назад")
+async def callback_unlock(message: types.Message, state: FSMContext):
+    await state.clear()
+    user_id = message.from_user.id
+    if user_id in list_admins:
+        await message.answer(admin_text.text_start, reply_markup=await main_menu_admin())
+    elif user_id in list_super_users:
+        await message.answer(admin_text.super_admin_text, reply_markup=await super_admin_menu())
+
+
+@router.message(F.text == "Статистика")
+async def files_order_ready(message: types.Message, state: FSMContext):
+    if message.from_user.id not in list_super_users:
+        return
+    text = "Выберите нужный вид статистики"
+    keyboard = await statistic_menu()
+    await message.answer(text, reply_markup=keyboard)
+
+
+@router.message(F.text == "Заблокировать подрядчика")
+async def callback_block(message: types.Message, state: FSMContext):
+    if message.from_user.id not in list_super_users:
+        return
+    text = "Отправьте никнейм подрядчика, которого необходимо заблокировать"
+    await state.set_state(AdminStates.NAME_USER_BLOCK)
+    await message.answer(text, reply_markup=back_reply_but)
+
+
+@router.message(F.text == "Разблокировать подрядчика")
+async def callback_unlock(message: types.Message, state: FSMContext):
+    if message.from_user.id not in list_super_users:
+        return
+    text = "Отправьте никнейм подрядчика, которого необходимо разблокировать"
+    await state.set_state(AdminStates.NAME_USER_UNLOCK)
+    await message.answer(text, reply_markup=back_reply_but)
+
+
+@router.message(AdminStates.NAME_USER_BLOCK, F.content_type == 'text')
+async def user_block_processing(message: types.Message, state: FSMContext):
+    contractor = await ContractRepository.get_user_by_name(message.text)
+    if not contractor:
+        await message.answer("Пользователь с таким никнеймом не найден\n"
+                             "Попробуйте ещё раз, или нажмите кнопку Назад",
+                             reply_markup=back_reply_but)
+        return
+    await ContractRepository.update_contractor(contractor.id_telegram, {'active': False})
+    await state.set_state(None)
+    await message.answer(f"Подрядчик заблокирован", reply_markup=back_reply_but)
+    await message.bot.send_message(contractor.id_telegram, text="Вы были заблокированы администратором")
+
+
+@router.message(AdminStates.NAME_USER_UNLOCK, F.content_type == 'text')
+async def user_unlock_processing(message: types.Message, state: FSMContext):
+    contractor = await ContractRepository.get_user_by_name(message.text)
+    if not contractor:
+        await message.answer("Пользователь с таким никнеймом не найден\n"
+                             "Попробуйте ещё раз, или нажмите кнопку Назад",
+                             reply_markup=back_reply_but)
+        return
+    await ContractRepository.update_contractor(contractor.id_telegram, {'active': True})
+    await state.set_state(None)
+    await message.answer("Подрядчик разблокирован", reply_markup=back_reply_but)

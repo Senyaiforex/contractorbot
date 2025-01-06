@@ -1,11 +1,11 @@
-from sqlalchemy import select, and_, or_, update
+from sqlalchemy import select, and_, or_, update, func
 from sqlalchemy.orm import selectinload
 
 from database import get_async_session, AsyncSession
 from models import Order, StatusEnum
 from functools import wraps
 from .decorators import base_session
-
+from datetime import date, timedelta
 
 class OrderRepository:
     """
@@ -104,3 +104,41 @@ class OrderRepository:
                                                   Order.status == StatusEnum.active)))
         orders = query.scalars().first()
         return orders
+    @classmethod
+    @base_session
+    async def get_orders_date(cls, date: date, session: AsyncSession) -> tuple[int]:
+        """
+        Функция для получения количества созданных заказов
+        за сегодняшний день, неделю, месяц
+        :param session: Асинхронная сессия
+        :param date: Дата
+        :return: Количество пользователей
+        :rtype: tuple[int]
+        """
+        week_date = date - timedelta(days=7)
+        month_date = date - timedelta(days=30)
+        count_today = await session.execute(
+                select(func.count(Order.id))
+                .where(Order.date == date)
+        )
+        count_week = await session.execute(
+                select(func.count(Order.id))
+                .where(Order.date >= week_date)
+        )
+        count_month = await session.execute(
+                select(func.count(Order.id))
+                .where(Order.date >= month_date)
+        )
+        return (count_today.scalar(), count_week.scalar(), count_month.scalar())
+    @classmethod
+    @base_session
+    async def get_count_orders(cls, session: AsyncSession) -> list[tuple[int, str]]:
+        count_active_orders = await session.execute(
+                select(func.count(Order.id))
+                .where(Order.status == StatusEnum.active)
+        )
+        count_completed_orders = await session.execute(
+                select(func.count(Order.id))
+                .where(Order.status == StatusEnum.completed)
+        )
+        return (count_active_orders.scalar(), count_completed_orders.scalar())

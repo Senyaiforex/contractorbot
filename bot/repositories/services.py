@@ -1,7 +1,8 @@
-from sqlalchemy import select, and_, or_, delete
+from sqlalchemy import select, and_, or_, delete, func
+from sqlalchemy.orm import aliased
 
 from database import get_async_session, AsyncSession
-from models import Contractors, Service, services_contractors
+from models import Contractors, Service, services_contractors, Order
 from functools import wraps
 from .decorators import base_session
 
@@ -62,3 +63,32 @@ class ServiceRepository:
         session.add(new_service)
         await session.commit()
 
+    @classmethod
+    @base_session
+    async def get_top_5_services(cls, session: AsyncSession) -> list[dict]:
+        order_alias = aliased(Order)
+        query = (
+                select(
+                        Service.id,
+                        Service.name,
+                        func.count(order_alias.id).label('order_count')
+                )
+                .join(order_alias, order_alias.service_id == Service.id)  # Соединение с заказами
+                .group_by(Service.id)  # Группировка по ID услуги
+                .order_by(func.count(order_alias.id).desc())  # Сортировка по количеству заказов
+                .limit(5)  # Ограничение до 5 услуг
+        )
+
+        result = await session.execute(query)
+        top_services = result.fetchall()
+
+        # Обрабатываем результат, чтобы получить данные в нужном формате
+        services_list = []
+        for service in top_services:
+            # Здесь service будет кортежем вида (id, name, order_count)
+            services_list.append({
+                    'id': service[0],
+                    'name': service[1],
+                    'order_count': service[2]
+            })
+        return services_list

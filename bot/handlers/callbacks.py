@@ -5,10 +5,11 @@ from pathlib import Path
 
 from aiogram.utils.media_group import MediaGroupBuilder
 from models import StatusEnum
-from handlers.states import RegStates, ServiceState, OrderCreateState
+from handlers.states import RegStates, ServiceState, OrderCreateState, AdminStates
 from utils import admin_text, user_text
 from utils.helpers import create_services_text, text_service_admins, create_services_admin_text, text_services_contr, \
-    create_text_order, create_text_detail_order
+    create_text_order, create_text_detail_order, create_text_statistic_users, create_text_statistic_orders, \
+    create_exel_data_contractors, create_exel_data_orders
 from aiogram import Router
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.fsm.context import FSMContext
@@ -16,12 +17,15 @@ from aiogram.types import CallbackQuery, FSInputFile, InputMediaPhoto, InputMedi
 from keyboards import main_menu_admin, main_menu_contractors, services_menu, up_balance_vars, list_services_menu, \
     add_service_keyboard, delete_service_keyboard, admin_service_menu, delete_service_admin, back_but, \
     finish_order_keyboard, offer_order, after_order_keyboard, payment_keyboard, orders_keyboard, order_detail_keyboard, \
-    orders_select_keyboard
+    orders_select_keyboard, back_reply_but, super_admin_menu
 from repositories import ServiceRepository, ContractRepository, OrderRepository
 from utils.payment import create_url_payment
 import logging
 import datetime
-list_admins = [272513813]
+
+list_admins = [5473168797]
+list_super_users = [718586333, 272513813]
+
 router = Router()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,14 +44,23 @@ async def main_menu(callback_query: CallbackQuery, state: FSMContext):
     if user_id in list_admins:
         await callback_query.message.edit_text(text=admin_text.text_start,
                                                reply_markup=await main_menu_admin())
+
+    elif user_id in list_super_users:
+        await callback_query.message.edit_text(admin_text.super_admin_text,
+                                               reply_markup=await super_admin_menu())
     else:
         contractor = await ContractRepository.get_contractor_by_id(user_id)
+        if contractor and contractor.active == False:
+            await callback_query.message.delete()
+            await callback_query.message.answer("Вы заблокированы администратором")
         reg = True if contractor else False
         text = user_text.text_start if not reg else user_text.text_constr.format(fio=contractor.full_name,
                                                                                  balance=contractor.balance,
                                                                                  number=contractor.number_phone,
                                                                                  city=contractor.city,
-                                                                                 date_reg=datetime.date.strftime(contractor.date_reg, '%d-%m-%Y'))
+                                                                                 date_reg=datetime.date.strftime(
+                                                                                         contractor.date_reg,
+                                                                                         '%d-%m-%Y'))
         await callback_query.message.edit_text(text=text,
                                                reply_markup=await main_menu_contractors(reg))
 
@@ -78,7 +91,12 @@ async def my_services(callback_query: CallbackQuery, state: FSMContext):
     :return:
     """
     user_id = callback_query.from_user.id
-    services = await ServiceRepository.get_services_by_contractor(user_id)
+    services, contractor = await asyncio.gather(ServiceRepository.get_services_by_contractor(user_id),
+                                                ContractRepository.get_user_by_name(callback_query.from_user.username)
+                                                )
+    if contractor and contractor.active == False:
+        await callback_query.message.answer("Вы заблокированы администратором")
+        return
     text = await create_services_text(services)
     await callback_query.message.edit_text(
             text=text,
@@ -112,7 +130,11 @@ async def my_orders(callback_query: CallbackQuery, state: FSMContext):
     :param state: FSMContext
     :return:
     """
-    orders = await OrderRepository.get_orders_by_user(callback_query.from_user.id, 'all')
+    orders, contractor = await asyncio.gather(OrderRepository.get_orders_by_user(callback_query.from_user.id, 'all'),
+                                              ContractRepository.get_user_by_name(callback_query.from_user.username))
+    if contractor and contractor.active == False:
+        await callback_query.message.answer("Вы заблокированы администратором")
+        return
     if not orders:
         await callback_query.answer("Список заказов пуст")
         return
@@ -133,6 +155,10 @@ async def up_balance(callback_query: CallbackQuery, state: FSMContext):
     :param state: FSMContext
     :return:
     """
+    contractor = await ContractRepository.get_user_by_name(callback_query.from_user.username)
+    if contractor and contractor.active == False:
+        await callback_query.message.answer("Вы заблокированы администратором")
+        return
     await callback_query.message.edit_text(
             text="Выберите сумму для пополнения 💵",
             parse_mode='Markdown',
@@ -526,6 +552,7 @@ async def my_active_orders(callback_query: CallbackQuery, state: FSMContext):
             reply_markup=keyboard
     )
 
+
 @router.callback_query(lambda c: c.data == 'completed_orders')
 async def my_completed_orders(callback_query: CallbackQuery, state: FSMContext):
     """
@@ -579,3 +606,57 @@ async def change_status_order(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.answer("Статус заказа изменён")
     await OrderRepository.update_data_order(order_id, {"status": StatusEnum.completed})
     await my_completed_orders(callback_query, state)
+
+
+@router.callback_query(lambda c: c.data.startswith('statistic'))
+async def change_status_order(callback_query: CallbackQuery, state: FSMContext):
+    """
+    Функция обработки нажатия на inline-кнопку «✅ Выполнен»
+    :param callback_query: CallbackQuery
+    :param state: FSMContext
+    :return:
+    """
+    dict_state = {"users": create_text_statistic_users,
+                  "orders": create_text_statistic_orders}
+    type_action = callback_query.data.split('_')[1]
+    text = await dict_state[type_action]()
+    await callback_query.message.delete()
+    await callback_query.message.answer(text=text, reply_markup=back_reply_but)
+
+
+@router.callback_query(lambda c: c.data.startswith('user'))
+async def change_status_order(callback_query: CallbackQuery, state: FSMContext):
+    """
+    Функция обработки нажатия на inline-кнопку «✅ Выполнен»
+    :param callback_query: CallbackQuery
+    :param state: FSMContext
+    :return:
+    """
+    dict_state = {
+            "block": ("Отправьте никнейм пользователя, которого хотите заблокировать", AdminStates.NAME_USER_BLOCK),
+            "unlock": ("Отправьте никнейм пользователя, которого хотите разблокировать", AdminStates.NAME_USER_UNLOCK)}
+    type_action = callback_query.data.split('_')[1]
+    text = dict_state[type_action][0]
+    state_action = dict_state[type_action][1]
+    await callback_query.message.delete()
+    await callback_query.message.answer(text=text)
+    await state.set_state(state_action)
+
+@router.callback_query(lambda c: c.data == 'exel_download')
+async def download_exel(callback_query: CallbackQuery, state: FSMContext):
+    """
+    Функция обработки нажатия на inline-кнопку «Выгрузить данные »
+    :param callback_query: CallbackQuery
+    :param state: FSMContext
+    :return:
+    """
+    await callback_query.message.delete()
+    await callback_query.message.answer("Создание файлов....")
+    orders = await create_exel_data_orders()
+    contratcors = await create_exel_data_contractors()
+    media_group = MediaGroupBuilder(caption="Exel файлы из базы данных")
+    media = FSInputFile(orders)
+    media_group.add_document(media=media)
+    media = FSInputFile(contratcors)
+    media_group.add_document(media=media)
+    await callback_query.message.answer_media_group(media=media_group.build())

@@ -36,3 +36,4 @@ class Contractors(Base):
     orders = relationship("Order", backref='contractor')
     date_reg = Column(Date, default=datetime.utcnow, comment="Дата регистрации")
     free_try = Column(Boolean, comment="Бесплатная попытка", default=True)
+    active = Column(Boolean, default=True, comment="Активный ли пользователь")
