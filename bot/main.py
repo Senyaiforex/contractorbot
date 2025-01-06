@@ -17,7 +17,7 @@ from keyboards import offer_order, menu_button
 from repositories import ContractRepository, OrderRepository
 from utils import user_text
 
-TOKEN_BOT = "7992473058:AAGBtw8GdzEilqiAcJNUuIUc_Zmxts3mK1Y"
+TOKEN_BOT = "7608889792:AAFBc2jXoxRuOhnDOtjZLNnWvKYt8RJh1HU"
 
 bot = Bot(TOKEN_BOT)
 storage = MemoryStorage()
