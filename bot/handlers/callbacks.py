@@ -441,7 +441,8 @@ async def finish_create_order(callback_query: CallbackQuery, state: FSMContext):
     """
     order_id = callback_query.data.split('_')[2]
     order = await OrderRepository.get_order_by_id(int(order_id))
-    text = order.description + "\n\n" + f"Услуга - {order.service.name}"
+    service_name = order.service.name.replace('_', '\_')
+    text = order.description.replace('_', '\_') + "\n\n" + f"Услуга - {service_name}"
     media_group = MediaGroupBuilder(caption=text)
     await callback_query.message.delete_reply_markup()
     if order.photo_path:
@@ -510,9 +511,12 @@ async def yes_order_offer(callback_query: CallbackQuery, state: FSMContext):
     await OrderRepository.add_user_in_order(order.id, user.id_telegram)
 
     for manager_id in list_admins:
-        text = (f"*{user.full_name}* @{user.user_name} подтвердил заявку на выполнение работ\n\n"
-                f"{order.description}\n\n"
-                f"Услуга - {order.service.name}")
+        username = user.user_name.replace('_', '\_')
+        service_name = order.service.name.replace('_', '\_')
+        description = order.description.replace('_', '\_')
+        text = (f"*{user.full_name}* @{username} подтвердил заявку на выполнение работ\n\n"
+                f"{description}\n\n"
+                f"Услуга - {service_name}")
         await callback_query.bot.send_message(chat_id=manager_id, text=text, parse_mode="Markdown")
 
 

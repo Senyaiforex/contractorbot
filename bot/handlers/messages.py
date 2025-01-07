@@ -19,7 +19,7 @@ from utils import user_text, admin_text
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 router = Router()
-list_admins = [5473168797]
+list_admins = [5473168797, 718586333]
 list_super_users = [718586333, 272513813]
 
 

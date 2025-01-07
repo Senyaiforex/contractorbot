@@ -23,7 +23,8 @@ async def create_services_text(services: list[Service]) -> str:
         return 'У вас нет доступных услуг.'
     text = '*Список выполняемых Вами работ*\n\n'
     for service in services:
-        text += f'-  {service.name}\n'
+        name_service = service.name.replace('_', '\_')
+        text += f'-  {name_service}\n'
     return text
 
 
@@ -37,7 +38,8 @@ async def create_services_admin_text(services: list[Service]) -> str:
         return 'Список услуг пуст.'
     text = '*Список услуг для выполнения подрядчиками*\n\n'
     for service in services:
-        text += f'-  {service.name}\n'
+        name_service = service.name.replace('_', '\_')
+        text += f'-  {name_service}\n'
     return text
 
 
@@ -51,7 +53,8 @@ async def text_service_admins(services: list[Service]) -> str:
         return 'Услуги отсутствуют'
     text = '*Список услуг*\n\n'
     for service in services:
-        text += f'-  {service.name}\n'
+        name_service = service.name.replace('_', '\_')
+        text += f'-  {name_service}\n'
     return text
 
 
@@ -66,7 +69,8 @@ async def text_services_contr(services: list[Service]) -> str:
     text = ('*Выберите услугу*\n'
             '*Список услуг*\n\n')
     for service in services:
-        text += f'-  {service.name}\n'
+        name_service = service.name.replace('_', '\_')
+        text += f'-  {name_service}\n'
     return text
 
 
@@ -79,7 +83,7 @@ async def create_text_order(orders: list[Order]) -> str:
     text = '*Список выполненных заказов*\n\n'
     for order in orders:
         date = datetime.date.strftime(order.date, '%d-%m-%Y')
-        service_name = order.service.name
+        service_name = order.service.name.replace('_', '\_')
         text += f'-  Тип работ - {service_name}  дата - {date}\n'
     return text
 
@@ -91,7 +95,7 @@ async def create_text_detail_order(order: Order) -> str:
     :return:
     """
     date = datetime.date.strftime(order.date, '%d-%m-%Y')
-    service_name = order.service.name
+    service_name = order.service.name.replace('_', '\_')
 
     text = (f'Заказ {order.id} {date}\n'
             f'Описание\n'
@@ -131,7 +135,8 @@ async def create_text_statistic_orders() -> str:
             f'Заказов за месяц: {orders_with_time[2]}\n'
             f'Топ 5 услуг по количеству заказов:\n')
     for service in top_services:
-        text += f'{service["name"]}. Количество заказов - {service["order_count"]}\n'
+        name_service = service['name'].replace('_', '\_')
+        text += f'{name_service}. Количество заказов - {service["order_count"]}\n'
     return text
 
 
