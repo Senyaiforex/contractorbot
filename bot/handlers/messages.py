@@ -327,10 +327,10 @@ async def client_phone_processing(message: types.Message, state: FSMContext):
     await message.delete()
     await OrderRepository.update_data_order(int(order_id), {'description': text})
     order = await OrderRepository.get_order_by_id(int(order_id))
-    files_list = order.photo_path.split('\n')
     text = order.description + "\n\n" + f"Услуга - {order.service.name}"
     media_group = MediaGroupBuilder(caption=text)
     if order.photo_path:
+        files_list = order.photo_path.split('\n')
         for path_file in files_list[:len(files_list) - 1]:
             if path_file:
                 if files_list[0].split('.')[1].lower() in ['jpeg', 'png', 'jpg', 'svg', 'gif', 'raw', 'tiff']:
